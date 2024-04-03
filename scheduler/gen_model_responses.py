@@ -39,11 +39,11 @@ else:
 
     df_prompts.to_csv('sampled_prompts.csv', index=False)
 
-print('# of prompts for vicuna:', len(df_prompts[df_prompts['model']=='vicuna-13b']))
-# print(df_prompts.groupby('model')['conversation_id'].describe()['count'])
-# print('Output distribution:', df_prompts[df_prompts['model']=='vicuna-13b']['response_length'].describe())
-
 data_src_model = 'vicuna-13b'
+
+print('# of prompts:', len(df_prompts[df_prompts['model']==data_src_model]))
+# print('Output distribution:', df_prompts[df_prompts['model']==data_src_model]['response_length'].describe())
+
 prompts = df_prompts[df_prompts['model']==data_src_model]['content'].to_list()
 
 sampling_params = SamplingParams(temperature=0, top_p=1, max_tokens=2048)
