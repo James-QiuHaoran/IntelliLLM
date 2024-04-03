@@ -1,7 +1,5 @@
 from datasets import load_dataset
 import pandas as pd
-import math
-import numpy as np
 import time
 from vllm import LLM, SamplingParams
 
@@ -70,5 +68,7 @@ if SAVE_RESPONSE_TO_CSV:
 
     df_responses = pd.concat([df_responses, pd.DataFrame(data)], ignore_index=True)
     print(df_responses.head())
+    print('Generated', len(df_responses), 'prompt responses')
 
     df_responses.to_csv('sampled_prompts_responses_'+model_to_serve_short+'.csv', index=False)
+    print('Saved to file:', 'sampled_prompts_responses_'+model_to_serve_short+'.csv')
