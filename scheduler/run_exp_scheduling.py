@@ -6,8 +6,8 @@ import time
 from vllm import LLM, SamplingParams
 
 
-model_to_serve = 'facebook/opt-350m'
-model_to_serve_short = 'opt_350m'
+model_to_serve = 'openai-community/gpt2-medium'  # 'facebook/opt-350m'
+model_to_serve_short = 'gpt2_medium'  # 'opt_350m'
 dataset_path = 'sampled_prompts_responses_' + model_to_serve_short + '.csv'
 
 # load the llm query dataset from csv
@@ -43,9 +43,11 @@ for exp_id in range(num_exp):
 
     waiting_time = 0
     jct_list = []
+    num_completed_jobs = []
     for i in range(math.ceil(len(prompts) / batch_size)):
         start_time = time.perf_counter()
         outputs = llm.generate(prompts[i * batch_size : (i+1) * batch_size], sampling_params)
+        num_completed_jobs.append(len(outputs))
         # print('Output length (expected):', output_lengths[i * batch_size : (i+1) * batch_size])
         # print('Output length (actual):', end=' ')
         # for j in outputs:
@@ -56,11 +58,12 @@ for exp_id in range(num_exp):
         execution_time_ms = int((end_time - start_time) * 1000) + waiting_time
         waiting_time = execution_time_ms
         jct_list.append(execution_time_ms)
-    print('Avg JCT:', round(np.mean(jct_list[:-1]), 3), 'ms for executing', batch_size, 'requests')
-    # print('Individual throughput:', [batch_size * 1000 / elapsed_ms for elapsed_ms in jct_list[:-1]])
-    print('Mean throughput:', round(np.mean([batch_size * 1000 / elapsed_ms for elapsed_ms in jct_list[:-1]]), 3), 'req/s')
-    avg_jct_exp_list.append(np.mean(jct_list[:-1]))
-    throughput_exp_list.append(np.mean([batch_size * 1000 / elapsed_ms for elapsed_ms in jct_list[:-1]]))
+    avg_jct = round(np.average(jct_list, weights=num_completed_jobs), 3)
+    print('Avg JCT:', avg_jct, 'ms for executing', round(np.mean(num_completed_jobs), 2), 'requests')
+    avg_throughput = round(np.mean([num_jobs * 1000 / elapsed_ms for elapsed_ms, num_jobs in zip(jct_list, num_completed_jobs)]), 3)
+    print('Mean throughput:', avg_throughput, 'req/s')
+    avg_jct_exp_list.append(avg_jct)
+    throughput_exp_list.append(avg_throughput)
     print()
 
 # end of the experiments
