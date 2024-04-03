@@ -7,8 +7,10 @@ from vllm import LLM, SamplingParams
 LOAD_FROM_CSV = True
 SAVE_RESPONSE_TO_CSV = True
 
-model_to_serve = 'facebook/opt-350m'
-model_to_serve_short = 'opt_350m'
+# openai-community/gpt2-medium (355m)
+# facebook/opt-350m
+model_to_serve = 'openai-community/gpt2-medium'  # 'facebook/opt-350m'
+model_to_serve_short = 'gpt2_medium'  # 'opt_350m'
 
 if LOAD_FROM_CSV:
     # load the llm query dataset from csv
