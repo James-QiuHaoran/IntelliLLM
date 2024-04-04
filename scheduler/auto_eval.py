@@ -8,7 +8,6 @@ from vllm import LLM, SamplingParams
 def eval(df_prompts, llm, max_batch_size, methods=['fcfs', 'sjf']):
     num_exp = 20
     num_jobs_per_exp = 50
-    use_prediction = False
     avg_jct_exp_list = {}
     throughput_exp_list = {}
 
@@ -27,11 +26,31 @@ def eval(df_prompts, llm, max_batch_size, methods=['fcfs', 'sjf']):
             print('Starting experiments for', method)
             if method == 'sjf':
                 # sort the prompts
-                dict_lst_order = {prompts[i]: output_lengths[i] for i in range(len(prompts))}
-                sorted_prompts = sorted(dict_lst_order, key=dict_lst_order.get)
-                sorted_lengths = [dict_lst_order[key] for key in sorted_prompts]
-                prompts = sorted_prompts
-                output_lengths = sorted_lengths
+                # dict_lst_order = {prompts[i]: output_lengths[i] for i in range(len(prompts))}
+                # sorted_prompts = sorted(dict_lst_order, key=dict_lst_order.get)
+                # sorted_lengths = [dict_lst_order[key] for key in sorted_prompts]
+                # prompts = sorted_prompts
+                # output_lengths = sorted_lengths
+
+                # create a dictionary to store prompts and their corresponding output lengths
+                prompt_dict = {}
+                for i in range(len(prompts)):
+                    prompt = prompts[i]
+                    length = output_lengths[i]
+                    if prompt in prompt_dict:
+                        prompt_dict[prompt].append(length)
+                    else:
+                        prompt_dict[prompt] = [length]
+
+                # sort the dictionary based on the values (output lengths)
+                sorted_prompts_lengths = sorted(prompt_dict.items(), key=lambda x: sorted(x[1]))
+
+                # recreate the original lists
+                prompts = []
+                output_lengths = []
+                for prompt, lengths in sorted_prompts_lengths:
+                    prompts.extend([prompt] * len(lengths))
+                    output_lengths.extend(lengths)
 
             waiting_time = 0
             jct_list = []
@@ -92,23 +111,23 @@ if __name__ == '__main__':
     # clear the GPU memory used by the model
     del llm.llm_engine.driver_worker
 
-    model_to_serve = 'openai-community/gpt2-medium'
-    model_to_serve_short = 'gpt2_medium'
-    dataset_path = 'sampled_prompts_responses_' + model_to_serve_short + '.csv'
+    # model_to_serve = 'openai-community/gpt2-medium'
+    # model_to_serve_short = 'gpt2_medium'
+    # dataset_path = 'sampled_prompts_responses_' + model_to_serve_short + '.csv'
 
-    # load the llm query dataset from csv
-    df_prompts = pd.read_csv(dataset_path)
-    # print(df_prompts.head())
-    print('# of total prompts:', len(df_prompts[df_prompts['model']==model_to_serve]))
+    # # load the llm query dataset from csv
+    # df_prompts = pd.read_csv(dataset_path)
+    # # print(df_prompts.head())
+    # print('# of total prompts:', len(df_prompts[df_prompts['model']==model_to_serve]))
 
-    sampling_params = SamplingParams(temperature=0, top_p=1, max_tokens=2048)
-    llm = LLM(model=model_to_serve, gpu_memory_utilization=0.9)
+    # sampling_params = SamplingParams(temperature=0, top_p=1, max_tokens=2048)
+    # llm = LLM(model=model_to_serve, gpu_memory_utilization=0.9)
 
-    for max_batch_size in [5, 10, 15, 20, 25]:
-        print('Max batch size:', max_batch_size)
-        jct, throughput = eval(df_prompts, llm, max_batch_size, methods=methods)
-        for method in methods:
-            data.append({'model': 'gpt2-medium', 'max_batch_size': max_batch_size, 'method': method, 'jct': jct[method], 'throughput': throughput[method]})
+    # for max_batch_size in [5, 10, 15, 20, 25]:
+    #     print('Max batch size:', max_batch_size)
+    #     jct, throughput = eval(df_prompts, llm, max_batch_size, methods=methods)
+    #     for method in methods:
+    #         data.append({'model': 'gpt2-medium', 'max_batch_size': max_batch_size, 'method': method, 'jct': jct[method], 'throughput': throughput[method]})
 
     df = pd.concat([df, pd.DataFrame(data)], ignore_index=True)
     print(df.head())
