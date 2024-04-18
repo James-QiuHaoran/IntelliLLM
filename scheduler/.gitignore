@@ -1,0 +1,6 @@
+data/
+metrics/
+models/
+results/
+*.pdf
+test.py
