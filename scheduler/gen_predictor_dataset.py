@@ -32,13 +32,13 @@ def calc_percentile(dataset):
 def preprocess_dataset(dataset):
     dataset = Dataset.from_pandas(dataset)
 
-    dataset = dataset.remove_columns(['model', 'conversation_id', 'round_id', 'response'])
-    # Columns left: prompt, response_length
+    dataset = dataset.remove_columns(['model', 'round_id'])  # 'conversation_id'
+    # Columns left: prompt, response_length, conversation_id
 
     # Tokenize the user prompt
     # dataset = dataset.map(tokenize_function, batched=True, remove_columns=['prompt'])
     dataset = dataset.map(tokenize_function, batched=False, remove_columns=['prompt'])
-    # Columns left: input_ids, token_type_ids, attention_mask, response_length
+    # Columns left: input_ids, token_type_ids, attention_mask, response_length, conversation_id
 
     return dataset
 
@@ -60,10 +60,11 @@ if __name__ == '__main__':
     bert_tokenizer = AutoTokenizer.from_pretrained(proxy_model_name)
     bert_tokenizer.deprecation_warnings["Asking-to-pad-a-fast-tokenizer"] = True
 
-    dataset_path = 'sampled_prompts_responses_opt_350m.csv'
+    dataset_path = 'sampled_prompts_responses_opt_350m_14K.csv'
     model_name = 'opt-350m'
     dataset = pd.read_csv(dataset_path)
     selected_data_size = len(dataset)
+    print(f'Selected data size: {selected_data_size}')
 
     dataset_path = model_name + '_'
     dataset_path = dataset_path + 'reg_' if task_type == 0 else dataset_path + 'cls_' if task_type == 1 else dataset_path + 'multi_cls_'

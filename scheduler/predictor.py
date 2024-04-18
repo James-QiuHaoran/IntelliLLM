@@ -238,6 +238,8 @@ def eval_regression(model, dataloader, device):
 def predict(model, dataloader, device):
     model.eval()
     predicted_labels = []
+    conversation_ids = []
+    # round_ids = []
     actual_lengths = []
     latencies = []
     print_model_names = []
@@ -255,13 +257,23 @@ def predict(model, dataloader, device):
                 lengths = batch['num_tokens']
             end_time = time.time()
 
+            # associate the conversation_id and round_id with the predicted label
+            conversation_ids_batch = batch['conversation_id']
+            # round_ids_batch = batch['round_id']
+
             predicted_labels.extend(predictions.cpu().numpy())
+            conversation_ids.extend(conversation_ids_batch.numpy())
+            # round_ids.extend(round_ids_batch.numpy())
             actual_lengths.extend(lengths.numpy())
             latencies.append(end_time - start_time)
             for _ in range(len(input_ids)):
                 print_model_names.append(model_name)
 
-    df = pd.DataFrame({'actual_length': actual_lengths, 'predicted_label': predicted_labels, 'latency': latencies, 'model_name': print_model_names})
+    df = pd.DataFrame({'actual_length': actual_lengths,
+                       'predicted_label': predicted_labels,
+                       'conversation_id': conversation_ids,
+                    #    'round_id': round_ids,
+                       'latency': latencies, 'model_name': print_model_names})
     return df
 
 
@@ -322,7 +334,7 @@ if __name__ == '__main__':
 
     # prompt-response dataset
     model_name = 'opt-350m'
-    selected_data_size = 1000  # len(dataset)
+    selected_data_size = 14000  # len(dataset)
     dataset_path = get_dataset_path()
     dataset = datasets.load_from_disk(dataset_path)
     print(f'Loaded dataset from ' + dataset_path)
